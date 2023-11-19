@@ -1,23 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import axios from "axios";
+import { useState, useEffect } from "react";
+import ChattingRoom from "./page/ChattingRoom";
+import ChattingList from "./page/ChattingList";
+import ChattingRoom2 from "./page/ChattingRoom2";
+import ModalInfo from "./component/ModalInfo";
 
 function App() {
+  // const [data, setData] = useState();
+
+  // useEffect(() => {
+  //   getMain();
+  // }, []);
+
+  // const getMain = () =>
+  //   axios
+  //     .get("/main")
+  //     .then(function (response) {
+  //       setData(response.data);
+  //       console.log(response.data);
+  //     })
+  //     .catch(function (error) {
+  //       console.log(error);
+  //     });
+  const [user, setUser] = useState("");
+  const [room, setRoom] = useState("");
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {/* <h2>{data}</h2> */}
+      {/* <ChattingList /> */}
+      {/* <ChattingRoom /> */}
+
+      <div>
+        {!user ? (
+          <ModalInfo setUser={setUser} setRoom={setRoom} />
+        ) : (
+          <ChattingRoom2 user={user} room={room} />
+        )}
+      </div>
     </div>
   );
 }
