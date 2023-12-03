@@ -18,7 +18,7 @@ const ChattingRoom = ({ user, room }) => {
   const [messageHistory, setMessageHistory] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const stompClientRef = useRef(null);
-  let stompClient = useRef(null);
+  //let stompClient = useRef(null);
 
   //const currentTime = new Date().toLocaleString("ko-KR", { hour12: false });
   const currentTime = new Date().toLocaleString("ko-KR", {
@@ -29,64 +29,71 @@ const ChattingRoom = ({ user, room }) => {
 
   useEffect(() => {
     const socket = new SockJS("http://localhost:8080/ws");
-    stompClient = Stomp.over(socket);
+    const stompClient = Stomp.over(socket);
 
-    //if (stompClientRef.current === null) {
-    // 초기에 렌더링 두번 되서 추가
-    stompClientRef.current = stompClient;
+    if (stompClientRef.current === null) {
+      // 초기에 렌더링 두번 되서 추가
+      stompClientRef.current = stompClient;
 
-    stompClient.connect({}, () => {
-      console.log("WebSocket 연결 완료!");
+      stompClient.connect({}, () => {
+        console.log("WebSocket 연결 완료!");
 
-      // 연결되자마자 기존 메세지 불러옴
-      getMessage();
+        // 연결되자마자 기존 메세지 불러옴
+        getMessage();
 
-      // 구독 시작
-      stompClient.subscribe("/sub/chat/room/" + room, (message) => {
-        const content = JSON.parse(message.body);
-        console.log("content 확인 : " + content);
-        console.log("content message 확인 : " + content.message);
+        // 구독 시작
+        stompClient.subscribe("/sub/chat/room/" + room, (message) => {
+          const content = JSON.parse(message.body);
+          setMessageHistory((prevMessages) => [
+            ...prevMessages,
+            content,
+            // {
+            //   message: content.message,
+            //   user: content.user,
+            //   roomNo: content.room,
+            //   timeStamp: content.currentTime,
+            //   type: content.type,
+            // },
+          ]);
+        });
+
+        // 입장 메세지 전송
+        stompClient.send(
+          "/pub/chat/join/" + room,
+          {},
+          JSON.stringify({
+            message: user + "입장이요",
+            user: user,
+            roomNo: room,
+            timeStamp: currentTime,
+            type: "In",
+          })
+        );
+        // 스크롤
+        messageEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
       });
-
-      // 입장 메세지 전송
-      stompClient.send(
-        "/pub/chat/join/" + room,
-        {},
-        JSON.stringify({
-          message: user + "입장이요",
-          user: user,
-          roomNo: room,
-          timeStamp: currentTime,
-          type: "In",
-        })
-      );
-      // 스크롤
-      messageEndRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    });
-    //}
+    }
   }, []);
 
   const messageEndRef = useRef(null);
 
   useEffect(() => {
-    if (stompClientRef.current) {
-      stompClient.subscribe("/sub/chat/room/" + room, (message) => {
-        const content = JSON.parse(message.body);
-        setMessageHistory((prevMessages) => [...prevMessages, content.message]);
+    axios
+      .get("/api/messages/" + room)
+      .then((response) => {
+        console.log(response.data);
+        setMessageHistory((prevMessages) => [...response.data]);
+      })
+      .catch((error) => {
+        console.error("Error fetching messages:", error);
       });
-
-      messageEndRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }
-  }, [messageHistory]);
+  }, [setCurrentMessage]);
 
   const handleSendMessage = () => {
-    console.log(currentMessage);
+    //console.log(currentMessage);
     if (stompClientRef.current && currentMessage.trim() !== "") {
       stompClientRef.current.send(
         "/pub/chat/message/" + room,
@@ -100,7 +107,19 @@ const ChattingRoom = ({ user, room }) => {
         })
       );
       console.log("handleSendMessage success");
+
+      //   setMessageHistory((prevMessages) => [
+      //     ...prevMessages,
+      //     {
+      //       message: currentMessage,
+      //       user: user,
+      //       timeStamp: currentTime,
+      //       type: "msg",
+      //     },
+      //   ]);
+      //console.log("check!!!!!!!!!!!!!! " + messageHistory);
       setCurrentMessage("");
+      getMessage();
     }
   };
 
@@ -134,11 +153,6 @@ const ChattingRoom = ({ user, room }) => {
           {messageHistory.map((content, index) => (
             <InlineContainer key={index}>
               <SmallTextSpan>{content.user}</SmallTextSpan>
-
-              {/* {content.message.endsWith("님이 입장하셨습니다.") ? null : (
-                <SmallTextSpan>{content.user}</SmallTextSpan>
-              )} */}
-
               <ChatBox>{content.message}</ChatBox>
               <TimeStamp>{content.timeStamp}</TimeStamp>
             </InlineContainer>
