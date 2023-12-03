@@ -40,6 +40,7 @@ const ModalInfo = ({ setUser, setRoom }) => {
           variant="outlined"
           value={roomNumber}
           onChange={(e) => setRoomNumber(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleJoinChat()}
         />
       </DialogContent>
       <DialogActions>
