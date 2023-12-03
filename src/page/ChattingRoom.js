@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Stomp from "stompjs";
 import SockJS from "sockjs-client";
 import axios from "axios";
+import Button from "@mui/material/Button";
 
 import {
   ChatBoxContainer,
@@ -18,9 +19,6 @@ const ChattingRoom = ({ user, room }) => {
   const [messageHistory, setMessageHistory] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const stompClientRef = useRef(null);
-  //let stompClient = useRef(null);
-
-  //const currentTime = new Date().toLocaleString("ko-KR", { hour12: false });
   const currentTime = new Date().toLocaleString("ko-KR", {
     hour12: true,
     hour: "numeric",
@@ -28,7 +26,7 @@ const ChattingRoom = ({ user, room }) => {
   });
 
   useEffect(() => {
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("http://192.168.0.19:8080/ws");
     const stompClient = Stomp.over(socket);
 
     if (stompClientRef.current === null) {
@@ -44,17 +42,7 @@ const ChattingRoom = ({ user, room }) => {
         // 구독 시작
         stompClient.subscribe("/sub/chat/room/" + room, (message) => {
           const content = JSON.parse(message.body);
-          setMessageHistory((prevMessages) => [
-            ...prevMessages,
-            content,
-            // {
-            //   message: content.message,
-            //   user: content.user,
-            //   roomNo: content.room,
-            //   timeStamp: content.currentTime,
-            //   type: content.type,
-            // },
-          ]);
+          setMessageHistory((prevMessages) => [...prevMessages, content]);
         });
 
         // 입장 메세지 전송
@@ -147,7 +135,9 @@ const ChattingRoom = ({ user, room }) => {
   return (
     <div>
       <h1>Chatting Room {room}</h1>
-      <button onClick={disconnectHandler}>나가기</button>
+      <Button variant="outlined" color="primary" onClick={disconnectHandler}>
+        나가기
+      </Button>
       <div className="content" room={room} user={user}>
         <ul className="chat_box">
           {messageHistory.map((content, index) => (
@@ -164,10 +154,23 @@ const ChattingRoom = ({ user, room }) => {
           value={currentMessage}
           onChange={(e) => setCurrentMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+          style={{
+            border: "none",
+            borderBottom: "2px solid lavender",
+            margin: "5px",
+            outline: "none",
+            fontSize: "15px",
+            width: "400px",
+          }}
         />
-        <button className="send" onClick={handleSendMessage}>
-          보내기
-        </button>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={handleSendMessage}
+        >
+          전송
+        </Button>
       </div>
       <div ref={messageEndRef}></div>
     </div>
